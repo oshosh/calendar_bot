@@ -223,3 +223,48 @@ const postMattermostWebhook = (msgBody, userName, attachments = []) => {
     });
     response.getContentText("UTF-8");
 }
+
+/**
+ * description
+ *  - 메타모스트에서 `/today` 슬래시 명령어를 입력 했을때 구글 신기술사업부 캘린더를 가져옵니다.
+ *  - 현재 휴가자와 회의 일정을 가져옵니다.
+ */
+const doPost = (e) => {
+  // Mattermost에서 전송된 파라미터 가져오기
+  const params = e.parameter || {};
+
+  // 디버깅 정보 구성
+  let debugInfo = "Debug Info:\n";
+  debugInfo += "Full request: " + JSON.stringify(e) + "\n";
+  debugInfo += "Parameters: " + JSON.stringify(params) + "\n";
+
+  // 명령어와 토큰 추출
+  const command = params.command || '';
+  const token = params.token || '';
+  const expectedToken = "{Mattermost 슬래시 명령어 토큰 값}";
+
+  debugInfo += "Command: " + command + "\n";
+  debugInfo += "Token: " + token + "\n";
+  debugInfo += "Expected Token: " + expectedToken + "\n";
+
+  // 토큰 검증
+  if (token !== expectedToken) {
+    debugInfo += "Token mismatch detected!\n";
+    return ContentService.createTextOutput(
+      JSON.stringify({ text: "Unauthorized: 잘못된 토큰입니다.\n" + debugInfo })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // /today 명령어 처리
+  if (command === '/today') {
+    todayEvent();
+    return ContentService.createTextOutput(
+      JSON.stringify({ text: "오늘의 일정 및 휴가자를 Mattermost에 게시했습니다!\n" })
+    ).setMimeType(ContentService.MimeType.JSON);
+  }
+
+  // 기본 응답
+  return ContentService.createTextOutput(
+    JSON.stringify({ text: "잘못된 명령어입니다.\n" + debugInfo })
+  ).setMimeType(ContentService.MimeType.JSON);
+}
